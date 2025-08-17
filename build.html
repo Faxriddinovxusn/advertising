@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Build Your Contacts</title>
+  <style>
+    :root{
+      --bg:#000;
+      --panel:#0f0f10;
+      --panel-2:#141416;
+      --text:#fff;
+      --muted:#b7b7b7;
+      --primary:#f5a623;
+      --danger:#ff3b30;
+      --ok:#22c55e;
+      --card:#0c0c0d;
+      --ring: rgba(245,166,35,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg,#000 0%, #0a0a0a 100%);
+      color:var(--text);
+    }
+
+    /* Header */
+    header{
+      text-align:center;
+      padding:28px 16px 8px;
+      position:sticky; top:0; z-index:20;
+      background: linear-gradient(180deg, rgba(0,0,0,.95) 0%, rgba(0,0,0,.65) 100%);
+      backdrop-filter: blur(6px);
+      border-bottom:1px solid #191919;
+    }
+    .title{
+      font-size: clamp(28px, 4vw, 44px);
+      letter-spacing:.5px;
+      color:var(--primary);
+      font-weight:800;
+      text-transform:uppercase;
+      text-shadow: 0 0 24px rgba(245,166,35,.25);
+      animation: drop .6s ease both;
+    }
+    @keyframes drop {
+      from{opacity:0; transform: translateY(-12px) scale(.98)}
+      to{opacity:1; transform: translateY(0) scale(1)}
+    }
+    #welcome{
+      margin-top:6px;
+      color:var(--muted);
+      font-size: clamp(14px, 2vw, 18px);
+    }
+
+    /* Top bars */
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; padding:10px 16px;
+      position:sticky; top:86px; z-index:19;
+      background: linear-gradient(180deg, rgba(0,0,0,.85) 0%, rgba(0,0,0,.4) 100%);
+      border-bottom:1px solid #151515;
+      backdrop-filter: blur(6px);
+    }
+    .left-actions, .right-actions{display:flex; gap:10px; flex-wrap:wrap}
+
+    .nav-btn{
+      background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
+      color:var(--text);
+      border:1px solid #2a2a2a;
+      padding:10px 16px;
+      border-radius:12px;
+      cursor:pointer; font-weight:700;
+      letter-spacing:.2px;
+      transition: transform .18s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+    .nav-btn.primary{border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring) inset}
+    .nav-btn:hover{transform: translateY(-1px)}
+    .icon-btn{padding:10px 12px; min-width:44px; display:flex; align-items:center; justify-content:center}
+    .badge{
+      background:var(--danger); color:#fff; font-size:12px; font-weight:800;
+      padding:2px 7px; border-radius:999px; margin-left:6px;
+    }
+
+    /* Search + Add */
+    .controls{
+      display:flex; gap:10px; padding:16px; align-items:center; justify-content:center; flex-wrap:wrap;
+    }
+    #search{
+      width:min(900px, 92vw);
+      background: #0d0d0e; color:#fff;
+      border:1px solid #232325; border-radius:12px;
+      padding:14px 16px; font-size:16px;
+      outline:none;
+      transition:border-color .2s, box-shadow .2s;
+    }
+    #search:focus{
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px var(--ring);
+    }
+    #addBtn{
+      background:var(--primary); color:#000; border:none;
+      padding:14px 28px; border-radius:14px; font-weight:800; letter-spacing:.4px;
+      cursor:pointer; box-shadow: 0 10px 30px rgba(245,166,35,.25);
+      transition: transform .15s ease, box-shadow .2s ease;
+    }
+    #addBtn:hover{ transform: translateY(-1px); box-shadow: 0 12px 36px rgba(245,166,35,.32)}
+
+    /* Work area */
+    .area{
+      padding: 10px 16px 120px;
+      display:flex; flex-direction:column; gap:14px; align-items:center;
+    }
+
+    /* Contact card ("table") */
+    .card{
+      width:min(980px, 95vw);
+      background: linear-gradient(180deg, #0b0b0c 0%, #0a0a0b 100%);
+      border:1px solid #1c1c1e;
+      border-radius:16px; padding:16px;
+      position:relative; overflow:hidden;
+      box-shadow: 0 8px 34px rgba(0,0,0,.35);
+      animation: pop .25s ease;
+    }
+    @keyframes pop{ from{opacity:0; transform: scale(.98)} to{opacity:1; transform: scale(1)} }
+    .card-grid{
+      display:grid; grid-template-columns: 1.1fr 1.1fr 1.1fr .9fr; gap:12px;
+    }
+    .field{display:flex; flex-direction:column; gap:6px}
+    .label{font-size:12px; color:#aaa; text-transform:uppercase; letter-spacing:.6px}
+    .input, .textarea{
+      background: #111214; color:#fff;
+      border:1px solid #2a2b2f; border-radius:12px;
+      padding:14px 12px; font-size:17px;
+      outline:none; transition:border-color .2s, box-shadow .2s;
+    }
+    .input:focus, .textarea:focus{border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring)}
+    .textarea{min-height: 90px; resize: vertical}
+    .big-col{grid-column: span 2}
+    .actions{
+      display:flex; gap:10px; align-items:center; justify-content:flex-end; margin-top:10px; flex-wrap:wrap;
+    }
+    .saveBtn{
+      background:linear-gradient(180deg,#f5a623 0%, #ee9f0a 100%);
+      color:#1a1a1a; border:none; border-radius:12px;
+      padding:12px 22px; font-weight:900; letter-spacing:.4px; cursor:pointer;
+      box-shadow: 0 12px 30px rgba(245,166,35,.3);
+      transition: filter .15s ease, transform .15s ease;
+    }
+    .saveBtn[disabled]{filter: grayscale(0.4) brightness(.8); opacity:.7; cursor:not-allowed}
+    .saveBtn:not([disabled]):hover{ transform: translateY(-1px)}
+    .mini-btn{
+      background:#17181a; color:#fff; border:1px solid #2b2d31; border-radius:10px; padding:10px 12px; cursor:pointer;
+    }
+    .mini-btn.danger{ background: #2a0e0e; border-color:#611; color:#ffbdbd}
+    .corner-minus{
+      position:absolute; right:10px; top:10px;
+      background:var(--danger); color:#fff; font-weight:900; border:none; border-radius:999px; width:32px; height:32px; cursor:pointer;
+    }
+    .comment-hide{
+      position:absolute; right:10px; bottom:10px;
+      background:#2a0e0e; color:#fff; font-weight:900; border:none; border-radius:999px; width:28px; height:28px; cursor:pointer; opacity:.8;
+    }
+
+    /* Photo box */
+    .photo-box{
+      display:flex; flex-direction:column; gap:8px; align-items:center; justify-content:center;
+      background:#0f1012; border:1px dashed #2a2a2a; border-radius:12px; padding:8px; min-height:130px;
+    }
+    .photo-preview{
+      width:100%; aspect-ratio: 1.2/1; background:#090909; border-radius:10px; overflow:hidden; position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid #222;
+    }
+    .photo-preview img{ width:100%; height:100%; object-fit: cover }
+    .photo-preview .hint{ color:#888; font-size:12px; position:absolute; bottom:8px; background:rgba(0,0,0,.45); padding:2px 6px; border-radius:6px; border:1px solid #222}
+    .photo-actions{display:flex; gap:8px; width:100%}
+    .like-toggle{font-size:20px; background:transparent; border:1px solid #2a2a2a; border-radius:10px; padding:8px 12px; cursor:pointer}
+    .like-toggle.active{ border-color: #ff4d84; box-shadow: 0 0 0 3px rgba(255,77,132,.25); background: radial-gradient(120px circle at 50% -50%, rgba(255,77,132,.15), transparent 60%)}
+
+    /* Drawers / panels */
+    .drawer{
+      position:fixed; inset:auto 0 0 0; max-height:70vh;
+      background: linear-gradient(180deg, #0c0c0d 0%, #0a0a0b 100%);
+      border-top:1px solid #1d1d21; box-shadow: 0 -20px 40px rgba(0,0,0,.45);
+      transform: translateY(110%); transition: transform .28s ease; z-index:50; overflow:auto;
+    }
+    .drawer.show{ transform: translateY(0)}
+    .drawer-header{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; position:sticky; top:0; background:#0c0c0d; border-bottom:1px solid #1c1c20}
+    .drawer-body{padding:14px 16px; display:grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap:12px}
+    .pill{font-size:12px; color:#ddd; background:#17181a; border:1px solid #2b2d31; padding:6px 10px; border-radius:999px}
+    .item{
+      background:#0e0f11; border:1px solid #232329; border-radius:12px; padding:12px;
+      display:flex; gap:10px; align-items:flex-start;
+      transition: transform .15s ease, border-color .2s;
+    }
+    .item:hover{ transform: translateY(-1px); border-color:#2e2e38 }
+    .thumb{ width:56px; height:56px; border-radius:8px; background:#090909; border:1px solid #222; overflow:hidden; flex:0 0 56px}
+    .thumb img{width:100%; height:100%; object-fit:cover}
+    .meta{flex:1}
+    .meta-title{font-weight:800}
+    .meta-sub{color:#aaa; font-size:13px}
+    .meta-tags{display:flex; gap:6px; flex-wrap:wrap; margin-top:6px}
+
+    /* Delete panel (right sheet) */
+    .sheet{
+      position:fixed; top:0; right:0; height:100%; width:min(520px, 96vw);
+      background:#0d0e10; border-left:1px solid #1d1d21; box-shadow: -30px 0 60px rgba(0,0,0,.5);
+      transform: translateX(110%); transition: transform .28s ease; z-index:60; overflow:auto;
+    }
+    .sheet.show{ transform: translateX(0)}
+    .sheet-header{display:flex; align-items:center; justify-content:space-between; padding:16px; border-bottom:1px solid #1d1d21; position:sticky; top:0; background:#0d0e10}
+    .sheet-body{padding:16px; display:flex; flex-direction:column; gap:10px}
+    .row{display:flex; align-items:center; gap:10px; background:#0f0f11; border:1px solid #232329; border-radius:12px; padding:10px}
+    .grow{flex:1}
+    .danger-btn{background:var(--danger); color:#fff; border:none; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:800}
+
+    /* Empty states */
+    .empty{
+      text-align:center; color:#999; padding:24px 0;
+    }
+
+
+
+
+
+    
+    /* Responsive card grid on small screens */
+    @media (max-width: 720px){
+      .card-grid{ grid-template-columns: 1fr 1fr }
+      .big-col{ grid-column: span 2 }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="title">Build Your Contacts</div>
+    <div id="welcome"></div>
+  </header>
+
+  <div class="topbar">
+    <div class="left-actions">
+      <button class="nav-btn primary" id="btnTables">Tables</button>
+      <button class="nav-btn" id="btnLike">Like</button>
+      <button class="nav-btn" id="btnPower">Power 💪</button>
+      <button class="nav-btn" id="btnFriends">Friends</button>
+      <button class="nav-btn" id="btnHeart">🩷</button>
+    </div>
+    <div class="right-actions">
+      <button class="nav-btn icon-btn" id="btnCart" title="Delete panel">🛒</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <input id="search" placeholder="search" />
+
+
+
+
+
+    <button id="addBtn">ADD</button>
+  </div>
+
+  <main class="area" id="workArea"></main>
+
+  <!-- Drawers -->
+  <section class="drawer" id="drawerTables">
+    <div class="drawer-header">
+      <div>
+        <strong>Saved contacts</strong>
+        <span class="pill" id="countAll">0</span>
+      </div>
+      <button class="mini-btn" data-close="#drawerTables">close</button>
+    </div>
+    <div class="drawer-body" id="listAll"></div>
+  </section>
+
+  <section class="drawer" id="drawerLike">
+    <div class="drawer-header">
+      <div><strong>Like</strong> <span class="pill" id="countLike">0</span></div>
+      <button class="mini-btn" data-close="#drawerLike">Close</button>
+    </div>
+    <div class="drawer-body" id="listLike"></div>
+  </section>
+
+  <section class="drawer" id="drawerPower">
+    <div class="drawer-header">
+      <div><strong>Power 💪</strong> <span class="pill" id="countPower">0</span></div>
+      <button class="mini-btn" data-close="#drawerPower">Close</button>
+    </div>
+    <div class="drawer-body" id="listPower"></div>
+  </section>
+
+  <section class="drawer" id="drawerFriends">
+    <div class="drawer-header">
+      <div><strong>Friends</strong> <span class="pill" id="countFriends">0</span></div>
+      <button class="mini-btn" data-close="#drawerFriends">Close</button>
+    </div>
+    <div class="drawer-body" id="listFriends"></div>
+  </section>
+
+  <section class="drawer" id="drawerHeart">
+    <div class="drawer-header">
+      <div><strong>🩷 Favorited</strong> <span class="pill" id="countHeart">0</span></div>
+      <button class="mini-btn" data-close="#drawerHeart">Close</button>
+    </div>
+    <div class="drawer-body" id="listHeart"></div>
+  </section>
+
+  <!-- Delete sheet -->
+  <aside class="sheet" id="sheetDelete">
+    <div class="sheet-header">
+      <div><strong>Delete panel</strong></div>
+      <button class="mini-btn" data-close="#sheetDelete">Close</button>
+    </div>
+    <div class="sheet-body">
+      <div id="deleteList"></div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px">
+        <button class="danger-btn" id="btnDeleteSelected">delete selected</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Camera modal -->
+  <template id="cameraModalTpl">
+    <div id="camWrap" style="position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:100; display:flex; align-items:center; justify-content:center; padding:16px">
+      <div style="background:#0e0f11; border:1px solid #232329; border-radius:16px; width:min(880px, 96vw); padding:12px; box-shadow:0 20px 60px rgba(0,0,0,.5)">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 6px 12px">
+          <strong>camera</strong>
+          <button class="mini-btn" id="camClose">Close</button>
+        </div>
+        <div style="display:grid; grid-template-columns: 1.2fr .8fr; gap:10px">
+          <div style="background:#000; border-radius:12px; overflow:hidden; border:1px solid #222; position: relative;">
+            <video id="camVideo" autoplay playsinline style="width:100%; height:420px; object-fit:cover"></video>
+            <div id="cameraControls" style="position: absolute; bottom: 10px; left: 0; right: 0; display: flex; justify-content: center; gap: 10px;">
+              <button class="nav-btn" id="camSwitch" style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);">back camera</button>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <canvas id="camCanvas" width="640" height="420" style="width:100%; background:#0a0a0a; border:1px solid #222; border-radius:12px"></canvas>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content: center;">
+              <button class="nav-btn" id="camSnap" style="flex: 1; padding: 12px;">Take a pic, </button>
+              <button class="nav-btn" id="camUse" disabled style="flex: 1; padding: 12px; display: none;">Use photo</button>
+              <button class="nav-btn" id="camConfirm" style="flex: 1; padding: 12px; display: none; background: var(--ok); color: white;">✅</button>
+            </div>
+            <small style="color:#aaa; text-align: center;">allow camera</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    // ========== Storage helpers ==========
+    const LS = {
+      get(key, def){ try{ return JSON.parse(localStorage.getItem(key)) ?? def }catch{ return def }},
+      set(key, val){ localStorage.setItem(key, JSON.stringify(val)) }
+    };
+    const state = {
+      contacts: LS.get('contacts', []),        // saved contacts
+      likedIds: new Set(LS.get('likedIds', [])),
+      drafts: LS.get('drafts', {}),            // by tempId => draft data
+      deleteSel: new Set()
+    };
+    function persist(){
+      LS.set('contacts', state.contacts);
+      LS.set('likedIds', Array.from(state.likedIds));
+      LS.set('drafts', state.drafts);
+    }
+
+    // ========== Welcome name once ==========
+    (function welcomeOnce(){
+      let name = localStorage.getItem('username');
+      if(!name){
+        do {
+          name = prompt("Ismingizni kiriting (name, please):") || "";
+          name = name.trim();
+        } while(!name);
+        localStorage.setItem('username', name);
+      }
+      document.getElementById('welcome').textContent = `Welcome, ${name}!`;
+    })();
+
+    // ========== UI open/close helpers ==========
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => document.querySelectorAll(sel);
+    function openDrawer(sel){ $(sel).classList.add('show') }
+    function closeDrawer(sel){ $(sel).classList.remove('show') }
+    function openSheet(sel){ $(sel).classList.add('show') }
+    function closeSheet(sel){ $(sel).classList.remove('show') }
+
+    // Close buttons
+    document.addEventListener('click', e=>{
+      const closeSel = e.target.getAttribute?.('data-close');
+      if(closeSel){ const el = document.querySelector(closeSel); if(el){ el.classList.remove('show') } }
+    });
+
+    // ========== Build buttons ==========
+    $('#btnTables').onclick = ()=>{ renderAll(); openDrawer('#drawerTables') };
+    $('#btnLike').onclick = ()=>{ renderGroup('Like', '#listLike', '#countLike'); openDrawer('#drawerLike') };
+    $('#btnPower').onclick = ()=>{ renderGroup('Power', '#listPower', '#countPower'); openDrawer('#drawerPower') };
+    $('#btnFriends').onclick = ()=>{ renderGroup('Friends', '#listFriends', '#countFriends'); openDrawer('#drawerFriends') };
+    $('#btnHeart').onclick = ()=>{ renderHeart(); openDrawer('#drawerHeart') };
+    $('#btnCart').onclick = ()=>{ renderDeletePanel(); openSheet('#sheetDelete') };
+
+    // ========== Add new card ("table") ==========
+    const workArea = $('#workArea');
+    $('#addBtn').onclick = ()=> addCard();
+
+    function addCard(){
+      const id = 'tmp_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+      const draft = state.drafts[id] || {
+        id, name:'', surname:'', phone:'', comment:'', photoData:null, group:null, liked:false
+      };
+      state.drafts[id] = draft; persist();
+
+      const card = document.createElement('section');
+      card.className = 'card';
+      card.id = id;
+
+
+card.innerHTML = `
+  <button class="corner-minus" title="Yashirish" aria-label="Hide">-</button>
+
+  <div class="card-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <!-- NAME -->
+    <div class="field">
+      <div class="label">NAME</div>
+      <input class="input" data-k="name" placeholder="name" />
+    </div>
+
+    <!-- LAST NAME (NAME tagida) -->
+    <div class="field" style="grid-column: 1 / 3;">
+      <div class="label">LAST NAME</div>
+      <input class="input" data-k="surname" placeholder="last name" />
+    </div>
+
+    <!-- NUMBER (LAST NAME tagida) -->
+    <div class="field" style="grid-column: 1 / 3;">
+      <div class="label">NUMBER</div>
+      <input class="input" data-k="phone" placeholder="+998 ** *** ** **" />
+    </div>
+
+    <!-- PHOTO -->
+    <div class="field" style="grid-column: 1 / 3;">
+      <div class="label">PHOTO</div>
+      <div class="photo-box" style="max-width: 300px; margin: auto;">
+
+        <div class="photo-preview" data-role="preview">
+          <img src="..." alt="photo" style="width: 100%; height: 100%; object-fit: cover;" />
+
+          ${draft.photoData ? `<img src="${draft.photoData}" alt="photo" />` : ''}
+          <div class="hint">Click to upload a photo</div>
+        </div>
+        <div class="photo-actions">
+          <button class="mini-btn" data-role="btn-upload">upload</button>
+          <button class="mini-btn" data-role="btn-camera">camera</button>
+          <button class="like-toggle ${draft.liked ? 'active' : ''}" data-role="btn-like">🩷</button>
+          <input type="file" accept="image/*" capture="environment" hidden data-role="file" />
+        </div>
+      </div>
+    </div>
+
+    <!-- COMMENT -->
+    <div class="field big-col" style="position:relative; grid-column: 1 / 3;">
+      <div class="label">COMMENT</div>
+      <textarea class="textarea" data-k="comment" placeholder="Izoh..."></textarea>
+      <button class="comment-hide" title="Yashirish">-</button>
+    </div>
+  </div>
+
+  <div class="actions" style="grid-column: 1 / 3;">
+    <button class="saveBtn" data-role="save">Save</button>
+    <span style="color:#8a8a8a; font-size:13px">).</span>
+  </div>
+`;
+
+
+
+
+
+
+
+
+      workArea.prepend(card);
+
+      // references
+      const get = sel => card.querySelector(sel);
+      const inputs = card.querySelectorAll('.input, .textarea');
+      const btnSave = get('[data-role="save"]');
+      const btnMinus = card.querySelector('.corner-minus');
+      const btnCommentMinus = card.querySelector('.comment-hide');
+      const file = get('[data-role="file"]');
+      const btnUpload = get('[data-role="btn-upload"]');
+      const btnCamera = get('[data-role="btn-camera"]');
+      const btnLike = get('[data-role="btn-like"]');
+      const preview = get('[data-role="preview"]');
+
+      // init values
+      card.querySelector('[data-k="name"]').value = draft.name || '';
+      card.querySelector('[data-k="surname"]').value = draft.surname || '';
+      card.querySelector('[data-k="phone"]').value = draft.phone || '';
+      card.querySelector('[data-k="comment"]').value = draft.comment || '';
+
+      // enable/disable Save (always visible, active when usable)
+      function refreshSave(){
+        const valid = (draft.name?.trim().length>0) && (draft.phone?.trim().length>0);
+        btnSave.disabled = !valid;
+      }
+      refreshSave();
+
+      // auto-save draft on input
+      inputs.forEach(inp=>{
+        inp.addEventListener('input', ()=>{
+          draft[inp.dataset.k] = inp.value;
+          state.drafts[id] = draft; persist();
+          refreshSave();
+        });
+      });
+
+      // hide card (corner -)
+      btnMinus.onclick = ()=> card.remove();
+
+      // hide via comment (-)
+      btnCommentMinus.onclick = ()=> card.remove();
+
+      // upload via click on preview or button
+      preview.onclick = ()=> file.click();
+      btnUpload.onclick = ()=> file.click();
+      file.onchange = async ()=>{
+        const f = file.files?.[0]; if(!f) return;
+        const data = await fileToDataURL(f);
+        draft.photoData = data;
+        state.drafts[id] = draft; persist();
+        renderPreview(preview, data);
+        refreshSave();
+      };
+
+      // like toggle
+      btnLike.onclick = ()=>{
+        draft.liked = !draft.liked;
+        state.drafts[id] = draft; persist();
+        btnLike.classList.toggle('active', draft.liked);
+      };
+
+      // camera open
+      btnCamera.onclick = ()=> openCamera(async (dataUrl)=>{
+        // confirm to place
+        const ok = confirm("Tushirilgan rasmni kartaga joylashga rozimisiz?");
+        if(!ok) return;
+        draft.photoData = dataUrl;
+        state.drafts[id] = draft; persist();
+        renderPreview(preview, dataUrl);
+        refreshSave();
+      });
+
+      // save flow
+      btnSave.onclick = async ()=>{
+        // choose group
+        const group = await chooseGroup();
+        if(!group) return;
+
+        // finalize draft -> contact
+        const contact = {
+          id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+          name: draft.name?.trim() || '',
+          surname: draft.surname?.trim() || '',
+          phone: draft.phone?.trim() || '',
+          comment: draft.comment?.trim() || '',
+          photoData: draft.photoData || null,
+          group
+        };
+        state.contacts.unshift(contact);
+        // liked
+        if(draft.liked) state.likedIds.add(contact.id);
+
+        // clean draft and UI
+        delete state.drafts[id];
+        persist();
+        card.remove();
+
+        // visual feedback
+        toast(`Kontakt ${group} guruhiga saqlandi`);
+      };
+    }
+
+    function renderPreview(preview, dataUrl){
+      preview.innerHTML = `<img src="${dataUrl}" alt="photo"><div class="hint">Rasmni o‘zgartirish uchun bosing</div>`;
+    }
+    function fileToDataURL(file){
+      return new Promise(res=>{
+        const r = new FileReader();
+        r.onload = ()=> res(r.result);
+        r.readAsDataURL(file);
+      });
+    }
+
+    // ========== Group/Lists rendering ==========
+    function contactItem(c){
+      const heart = state.likedIds.has(c.id) ? '🩷' : '♡';
+      const g = c.group;
+      const editedInfo = c.edited ? ` · edited: ${c.edited}` : '';
+      return `
+        <div class="item" data-id="${c.id}">
+          <div class="thumb">${c.photoData?`<img src="${c.photoData}" alt="">`:""}</div>
+          <div class="meta">
+            <div class="meta-title">${escapeHtml(c.name)} ${escapeHtml(c.surname||'')}</div>
+            <div class="meta-sub">${escapeHtml(c.phone)} · ${escapeHtml(c.comment||'')}${editedInfo}</div>
+            <div class="meta-tags">
+              <span class="pill">Group: ${g}</span>
+              ${state.likedIds.has(c.id) ? '<span class="pill">🩷</span>' : ''}
+            </div>
+          </div>
+          <div>
+            <button class="mini-btn" data-act="toggle-like">${heart}</button>
+            <button class="mini-btn" data-act="edit-contact">Edit</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Kontaktlarni tahrirlash funksiyasi
+    function editContact(contactId) {
+      const contact = state.contacts.find(c => c.id === contactId);
+      if (!contact) return;
+
+      // Yangi kartochka yaratish
+      const card = document.createElement('section');
+      card.className = 'card';
+      card.id = contact.id;
+
+      card.innerHTML = `
+        <button class="corner-minus" title="Yashirish" aria-label="Hide">-</button>
+
+        <div class="card-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <!-- NAME -->
+          <div class="field">
+            <div class="label">NAME</div>
+            <input class="input" data-k="name" placeholder="name" value="${escapeHtml(contact.name)}" />
+          </div>
+
+          <!-- LAST NAME -->
+          <div class="field" style="grid-column: 1 / 3;">
+            <div class="label">LAST NAME</div>
+            <input class="input" data-k="surname" placeholder="last name" value="${escapeHtml(contact.surname)}" />
+          </div>
+
+          <!-- NUMBER -->
+          <div class="field" style="grid-column: 1 / 3;">
+            <div class="label">NUMBER</div>
+            <input class="input" data-k="phone" placeholder="+998 ** *** ** **" value="${escapeHtml(contact.phone)}" />
+          </div>
+
+          <!-- PHOTO -->
+          <div class="field" style="grid-column: 1 / 3;">
+            <div class="label">PHOTO</div>
+            <div class="photo-box" style="max-width: 300px; margin: auto;">
+
+              <div class="photo-preview" data-role="preview">
+                ${contact.photoData ? `<img src="${contact.photoData}" alt="photo" />` : '<div class="hint">Click to upload a photo</div>'}
+              </div>
+              <div class="photo-actions">
+                <button class="mini-btn" data-role="btn-upload">upload</button>
+                <button class="mini-btn" data-role="btn-camera">camera</button>
+                <button class="like-toggle ${contact.id && state.likedIds.has(contact.id) ? 'active' : ''}" data-role="btn-like">🩷</button>
+                <input type="file" accept="image/*" capture="environment" hidden data-role="file" />
+              </div>
+            </div>
+          </div>
+
+          <!-- COMMENT -->
+          <div class="field big-col" style="position:relative; grid-column: 1 / 3;">
+            <div class="label">COMMENT</div>
+            <textarea class="textarea" data-k="comment" placeholder="Izoh...">${escapeHtml(contact.comment)}</textarea>
+            <button class="comment-hide" title="Yashirish">-</button>
+          </div>
+        </div>
+
+        <div class="actions" style="grid-column: 1 / 3;">
+          <button class="saveBtn" data-role="save">Save</button>
+          <span style="color:#8a8a8a; font-size:13px">).</span>
+        </div>
+      `;
+
+      workArea.prepend(card);
+
+      // references
+      const get = sel => card.querySelector(sel);
+      const inputs = card.querySelectorAll('.input, .textarea');
+      const btnSave = get('[data-role="save"]');
+      const btnMinus = card.querySelector('.corner-minus');
+      const btnCommentMinus = card.querySelector('.comment-hide');
+      const file = get('[data-role="file"]');
+      const btnUpload = get('[data-role="btn-upload"]');
+      const btnCamera = get('[data-role="btn-camera"]');
+      const btnLike = get('[data-role="btn-like"]');
+      const preview = get('[data-role="preview"]');
+
+      // enable/disable Save (always visible, active when usable)
+      function refreshSave(){
+        const valid = (contact.name?.trim().length>0) && (contact.phone?.trim().length>0);
+        btnSave.disabled = !valid;
+      }
+      refreshSave();
+
+      // auto-save draft on input
+      inputs.forEach(inp=>{
+        inp.addEventListener('input', ()=>{
+          contact[inp.dataset.k] = inp.value;
+          refreshSave();
+        });
+      });
+
+      // hide card (corner -)
+      btnMinus.onclick = ()=> card.remove();
+
+      // hide via comment (-)
+      btnCommentMinus.onclick = ()=> card.remove();
+
+      // upload via click on preview or button
+      preview.onclick = ()=> file.click();
+      btnUpload.onclick = ()=> file.click();
+      file.onchange = async ()=>{
+        const f = file.files?.[0]; if(!f) return;
+        const data = await fileToDataURL(f);
+        contact.photoData = data;
+        renderPreview(preview, data);
+        refreshSave();
+      };
+
+      // like toggle
+      btnLike.onclick = ()=>{
+        if(contact.id && state.likedIds.has(contact.id)) {
+          state.likedIds.delete(contact.id);
+        } else if(contact.id) {
+          state.likedIds.add(contact.id);
+        }
+        btnLike.classList.toggle('active', contact.id && state.likedIds.has(contact.id));
+      };
+
+      // camera open
+      btnCamera.onclick = ()=> openCamera(async (dataUrl)=>{
+        // confirm to place
+        const ok = confirm("Tushirilgan rasmni kartaga joylashga rozimisiz?");
+        if(!ok) return;
+        contact.photoData = dataUrl;
+        renderPreview(preview, dataUrl);
+        refreshSave();
+      });
+
+      // save flow
+      btnSave.onclick = async ()=>{
+        // finalize contact
+        contact.name = contact.name?.trim() || '';
+        contact.surname = contact.surname?.trim() || '';
+        contact.phone = contact.phone?.trim() || '';
+        contact.comment = contact.comment?.trim() || '';
+        contact.photoData = contact.photoData || null;
+        contact.edited = new Date().toLocaleString('uz-UZ');
+
+        // clean UI
+        card.remove();
+
+        // visual feedback
+        toast(`Kontakt tahrirlandi`);
+        persist();
+        renderAll(); renderGroup('Like','#listLike','#countLike'); renderGroup('Power','#listPower','#countPower'); renderGroup('Friends','#listFriends','#countFriends'); renderHeart();
+      };
+    }
+
+    function renderAll(){
+      const list = $('#listAll');
+      const count = $('#countAll');
+      if(!state.contacts.length){
+        list.innerHTML = `<div class="empty">not saved yet</div>`;
+        count.textContent = '0'; return;
+      }
+      list.innerHTML = state.contacts.map(contactItem).join('');
+      count.textContent = state.contacts.length;
+      bindItemActions(list);
+    }
+
+    function renderGroup(group, listSel, countSel){
+      const list = $(listSel);
+      const count = $(countSel);
+      const items = state.contacts.filter(c=> c.group===group);
+      if(!items.length){
+        list.innerHTML = `<div class="empty">${group} gap</div>`;
+        count.textContent = '0'; return;
+      }
+      list.innerHTML = items.map(contactItem).join('');
+      count.textContent = items.length;
+      bindItemActions(list);
+    }
+
+    function renderHeart(){
+      const list = $('#listHeart');
+      const count = $('#countHeart');
+      const items = state.contacts.filter(c=> state.likedIds.has(c.id));
+      if(!items.length){
+        list.innerHTML = `<div class="empty">🩷 gap</div>`;
+        count.textContent = '0'; return;
+      }
+      list.innerHTML = items.map(contactItem).join('');
+      count.textContent = items.length;
+      bindItemActions(list);
+    }
+
+    function bindItemActions(root){
+      root.querySelectorAll('[data-act="toggle-like"]').forEach(btn=>{
+        btn.onclick = ()=>{
+          const id = btn.closest('.item').dataset.id;
+          if(state.likedIds.has(id)) state.likedIds.delete(id); else state.likedIds.add(id);
+          persist();
+          // re-render container that called it
+          if(root.id==='listAll') renderAll();
+          else if(root.id==='listLike') renderGroup('Like','#listLike','#countLike');
+          else if(root.id==='listPower') renderGroup('Power','#listPower','#countPower');
+          else if(root.id==='listFriends') renderGroup('Friends','#listFriends','#countFriends');
+          else if(root.id==='listHeart') renderHeart();
+        };
+      });
+
+      // Edit tugmachasi uchun hodisa
+      root.querySelectorAll('[data-act="edit-contact"]').forEach(btn=>{
+        btn.onclick = ()=>{
+          const id = btn.closest('.item').dataset.id;
+          editContact(id);
+        };
+      });
+    }
+
+    // ========== Delete panel ==========
+    function renderDeletePanel(){
+      const wrap = $('#deleteList');
+      state.deleteSel.clear();
+      if(!state.contacts.length){
+        wrap.innerHTML = `<div class="empty">O‘chirish uchun kontakt yo‘q</div>`;
+        return;
+      }
+      wrap.innerHTML = state.contacts.map(c=>`
+        <div class="row">
+          <input type="checkbox" data-id="${c.id}" />
+          <div class="thumb">${c.photoData?`<img src="${c.photoData}" alt="">`:""}</div>
+          <div class="grow">
+            <div style="font-weight:800">${escapeHtml(c.name)} ${escapeHtml(c.surname||'')}</div>
+            <div style="color:#aaa; font-size:13px">${escapeHtml(c.phone)} · Group: ${c.group} ${state.likedIds.has(c.id)?'· 🩷':''}</div>
+          </div>
+          <button class="mini-btn danger" data-id="${c.id}">Delete</button>
+        </div>
+      `).join('');
+      wrap.querySelectorAll('input[type="checkbox"]').forEach(ch=>{
+        ch.onchange = ()=> {
+          const id = ch.dataset.id;
+          if(ch.checked) state.deleteSel.add(id); else state.deleteSel.delete(id);
+        };
+      });
+      wrap.querySelectorAll('.mini-btn.danger').forEach(b=>{
+        b.onclick = ()=>{
+          const id = b.dataset.id;
+          removeContact(id);
+          renderDeletePanel();
+          renderAll(); renderGroup('Like','#listLike','#countLike'); renderGroup('Power','#listPower','#countPower'); renderGroup('Friends','#listFriends','#countFriends'); renderHeart();
+        };
+      });
+    }
+    $('#btnDeleteSelected').onclick = ()=>{
+      if(!state.deleteSel.size) return;
+      if(!confirm('Tanlangan kontaktlar o‘chirilsinmi?')) return;
+      for(const id of state.deleteSel) removeContact(id);
+      state.deleteSel.clear();
+      persist();
+      renderDeletePanel();
+      renderAll(); renderGroup('Like','#listLike','#countLike'); renderGroup('Power','#listPower','#countPower'); renderGroup('Friends','#listFriends','#countFriends'); renderHeart();
+      toast('O‘chirildi');
+    };
+    function removeContact(id){
+      const i = state.contacts.findIndex(x=> x.id===id);
+      if(i>=0) state.contacts.splice(i,1);
+      state.likedIds.delete(id);
+      persist();
+    }
+
+    // ========== Search ==========
+    const searchEl = $('#search');
+    searchEl.addEventListener('input', ()=> doSearch(searchEl.value.trim().toLowerCase()));
+
+    function doSearch(q){
+      if(!q){ renderAll(); return; }
+      const res = state.contacts.filter(c=>{
+        return [c.name,c.surname,c.phone,c.comment].some(v => (v||'').toLowerCase().includes(q));
+      });
+      const list = $('#listAll');
+      const count = $('#countAll');
+      openDrawer('#drawerTables');
+      if(!res.length){
+        list.innerHTML = `<div class="empty">nothing found</div>`;
+        count.textContent = '0'; return;
+      }
+      list.innerHTML = res.map(c=>{
+        const inHeart = state.likedIds.has(c.id);
+        const tags = [
+          `Group: ${c.group}`,
+          inHeart ? '🩷' : ''
+        ].filter(Boolean).map(t=>`<span class="pill">${t}</span>`).join('');
+        return `
+          <div class="item" data-id="${c.id}">
+            <div class="thumb">${c.photoData?`<img src="${c.photoData}" alt="">`:""}</div>
+            <div class="meta">
+              <div class="meta-title">${escapeHtml(c.name)} ${escapeHtml(c.surname||'')}</div>
+              <div class="meta-sub">${escapeHtml(c.phone)} · ${escapeHtml(c.comment||'')}</div>
+              <div class="meta-tags">${tags}</div>
+            </div>
+            <div>
+              <button class="mini-btn" data-act="toggle-like">${inHeart?'🩷':'♡'}</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      count.textContent = res.length;
+      bindItemActions(list);
+    }
+
+    
+    function chooseGroup(){
+      return new Promise(resolve=>{
+        // lightweight custom chooser
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:120; display:flex; align-items:center; justify-content:center; padding:16px';
+        wrap.innerHTML = `
+          <div style="background:#0f0f11; border:1px solid #232329; border-radius:16px; width:min(520px, 96vw); padding:16px">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+              <strong>Qaysi guruhga saqlaymiz?</strong>
+              <button class="mini-btn" id="gpCancel">Bekor qilish</button>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap">
+              <button class="nav-btn" data-gp="Like">Like</button>
+              <button class="nav-btn" data-gp="Power">power</button>
+              <button class="nav-btn" data-gp="Friends">Friends</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(wrap);
+        wrap.querySelectorAll('[data-gp]').forEach(b=>{
+          b.onclick = ()=>{ const g = b.dataset.gp; document.body.removeChild(wrap); resolve(g) };
+        });
+        wrap.querySelector('#gpCancel').onclick = ()=>{ document.body.removeChild(wrap); resolve(null) };
+      });
+    }
+
+    // ========== Camera ==========
+    async function openCamera(onUse){
+      const tpl = document.getElementById('cameraModalTpl').content.cloneNode(true);
+      document.body.appendChild(tpl);
+      const wrap = document.getElementById('camWrap');
+      const video = document.getElementById('camVideo');
+      const canvas = document.getElementById('camCanvas');
+      const btnSnap = document.getElementById('camSnap');
+      const btnUse = document.getElementById('camUse');
+      const btnConfirm = document.getElementById('camConfirm');
+      const btnClose = document.getElementById('camClose');
+      const btnSwitch = document.getElementById('camSwitch');
+      let stream = null, took = false;
+
+      // camerani old yoki orqa tarafini tanlash
+      let facingMode = 'environment'; // default: back camera
+
+      // camera tanlash tugmachasi
+      btnSwitch.onclick = async () => {
+        // camerani o'chirish
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+        // camerani yoqish
+        facingMode = facingMode === 'environment' ? 'user' : 'environment';
+        btnSwitch.textContent = facingMode === 'environment' ? 'front' : 'back camera';
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: false });
+          video.srcObject = stream;
+        } catch (e) {
+          alert('not allowed');
+        }
+      };
+
+      try{
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio:false });
+        video.srcObject = stream;
+        btnSwitch.textContent = facingMode === 'environment' ? 'front camera' : 'back camera';
+      }catch(e){
+        alert('not allowed');
+      }
+
+      btnSnap.onclick = ()=>{
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#000'; ctx.fillRect(0,0,w,h);
+        const vw = video.videoWidth, vh = video.videoHeight;
+        const ratio = Math.min(w/vw, h/vh);
+        const nw = vw*ratio, nh = vh*ratio;
+        const dx = (w-nw)/2, dy = (h-nh)/2;
+        ctx.drawImage(video, dx, dy, nw, nh);
+        took = true;
+        btnUse.style.display = 'none';
+        btnConfirm.style.display = 'block';
+      };
+      
+      btnConfirm.onclick = ()=>{
+        if(!took) return;
+        const dataUrl = canvas.toDataURL('image/jpeg', .9);
+        onUse?.(dataUrl);
+        cleanup();
+      };
+      
+      btnClose.onclick = cleanup;
+
+      function cleanup(){
+        try{ if(stream){ stream.getTracks().forEach(t=>t.stop()) } }catch{}
+        wrap?.remove();
+      }
+    }
+
+    
+    function toast(msg){
+      const t = document.createElement('div');
+      t.textContent = msg;
+      t.style.cssText = 'position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:#111; color:#fff; border:1px solid #333; padding:12px 16px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.4); z-index:200';
+      document.body.appendChild(t);
+      setTimeout(()=> t.remove(), 1800);
+    }
+
+    
+    function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])) }
+
+    
+    renderAll();
+  </script>
+</body>
+</html>
+
